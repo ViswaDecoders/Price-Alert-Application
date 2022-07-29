@@ -29,7 +29,7 @@ class AlertAdd(View):
         alert_item = Alert.objects.create(**alert_data)
 
         data = {
-            "message": f"New item added to Cart with id: {cart_item.id}"
+            "message": f"New item added to Cart with id: {alert_item.id}"
         }
         return JsonResponse(data, status=201)
 
