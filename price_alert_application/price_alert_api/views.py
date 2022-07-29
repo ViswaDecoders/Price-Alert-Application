@@ -72,6 +72,16 @@ class User_Login(APIView):
         }
         return response
 
+
+class User_Logout(APIView):
+    def get(self, request):
+        response = Response()
+        response.delete_cookie('authtoken')
+        response.data = {
+            "message": "Logout Success"
+        }
+        return response
+
 @method_decorator(csrf_exempt, name='dispatch')
 class Alert_Api(View):
     def post(self, request):
