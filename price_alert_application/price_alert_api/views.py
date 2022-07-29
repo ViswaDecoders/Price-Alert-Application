@@ -191,3 +191,42 @@ class Alert_Api(View):
 
         return JsonResponse(data)
 
+class Alert_status(View):
+    def get(self, request, status):
+        ctoken = request.COOKIES.get('authtoken')
+        try:
+            htoken = request.headers['Authorization'].split()[1]
+        except:
+            htoken=None
+
+        if not ctoken and not htoken:
+            return JsonResponse({"message": f"Token Missing",}, status=401)
+        
+        token=ctoken if ctoken else htoken
+        try:
+            payload = jwt.decode(token, secretkey, algorithms='HS256')
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=300)
+        except:
+            return JsonResponse({"message": f"Invalid Token",}, status=401)
+        
+        alerts = Alert.objects.filter(status=status)
+        alerts_count = len(alerts)
+
+        alerts_data = []
+        for alert in alerts:
+            alerts_data.append({
+                'alert_id': alert.id,
+                'alert_user': alert.user,
+                'alert_name': alert.name,
+                'alert_crypto_currency': alert.crytoCurrency,
+                'alert_price': alert.price,
+                'alert_status': alert.status,
+            })
+
+        data = {
+            'count': alerts_count,
+            'items': alerts_data,
+        }
+
+        return JsonResponse(data, status=200)
