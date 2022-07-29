@@ -1,0 +1,1 @@
+web: gunicorn price_alert_application.wsgi --timeout 15 --keep-alive 5 --log-level debug
