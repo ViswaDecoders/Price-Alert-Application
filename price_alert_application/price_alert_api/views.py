@@ -83,9 +83,9 @@ class Alert_Api(View):
         
         token=ctoken=htoken
         try:
-            payload = jwt.decode(token, secretkey, algorithm='HS256')
+            payload = jwt.decode(token, secretkey, algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"message": f"Token Expired, Kindly Re Login",}, status=401)
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=401)
         except:
             return JsonResponse({"message": f"Invalid Token",}, status=401)
         
