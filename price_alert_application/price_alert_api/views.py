@@ -162,12 +162,10 @@ class Alert_Api(View):
             
         alerts_count = Alert.objects.count()
         if len(cache.get("data"))==alerts_count:
-            print("data from cache")
             alerts = cache.get("data")
         else:
             alerts = Alert.objects.all()
             cache.set("data",alerts)
-            print("data from db")            
 
         alerts_data = []
         for alert in alerts:
