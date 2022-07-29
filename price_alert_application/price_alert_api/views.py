@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class AlertAdd(View):
+class Alert_Api(View):
     def post(self, request):
         data = json.loads(request.body.decode("utf-8"))
         a_name = data.get('alert_name')
@@ -32,5 +32,25 @@ class AlertAdd(View):
             "message": f"New item added to Cart with id: {alert_item.id}"
         }
         return JsonResponse(data, status=201)
+
+    def get(self, request):
+        items = Alert.objects.all()
+        items_count = Alert.objects.count()
+
+        items_data = []
+        for item in items:
+            items_data.append({
+                'alert_name': item.name,
+                'alert_crypto_currency': item.crytoCurrency,
+                'alert_price': item.price,
+                'alert_status': item.status,
+            })
+
+        data = {
+            'count': items_count,
+            'items': items_data,
+        }
+
+        return JsonResponse(data, status=200)
 
 
