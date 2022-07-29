@@ -2,17 +2,94 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
+
 import json
+import jwt
+import datetime
 
 from .models import User,Alert
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+secretkey = 'SeCrEtKeY'
+
+@method_decorator(csrf_exempt, name='dispatch')
+class User_Create(View):
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        u_name = data.get('user_name')
+        
+        if len(User.objects.filter(name=u_name)) == 1:
+            data = {
+                "message": f"User already Exists with the name {u_name}",
+            }
+            return JsonResponse(data, status=400)
+        else:
+            user_data = {
+                'name': u_name,
+            }
+            user = User.objects.create(**user_data)
+
+            data = {
+                "message": f"New user created with id: {user.id}",
+            }
+            return JsonResponse(data, status=201)
+    
+@method_decorator(csrf_exempt, name='dispatch')
+class User_Login(APIView):
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        u_name = data.get('user_name')
+
+        try:
+            user = User.objects.get(name=u_name)
+        except:
+            user = None
+        
+        if user is None:
+            raise AuthenticationFailed("User Not Found")
+        
+        payload = {
+            'name': u_name,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow(),
+        }
+
+        token = jwt.encode(payload, secretkey, algorithm='HS256')
+
+        user.authCode = token
+        user.save()
+
+        response = Response()
+        response.set_cookie(key='authToken',value=token, httponly=True)
+        response.data = {
+            "message": f"User Logged Succefully of id: {user.id}",
+            "authToken": f"{token}"
+        }
+        return response
 
 @method_decorator(csrf_exempt, name='dispatch')
 class Alert_Api(View):
     def post(self, request):
+        ctoken = request.COOKIES.get('authtoken')
+        htoken = request.headers['Authorization'].split()[1]
+
+        if not ctoken and not htoken:
+            return JsonResponse({"message": f"Token Missing",}, status=401)
+        
+        token=ctoken=htoken
+        try:
+            payload = jwt.decode(token, secretkey, algorithm='HS256')
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"message": f"Token Expired, Kindly Re Login",}, status=401)
+        except:
+            return JsonResponse({"message": f"Invalid Token",}, status=401)
+        
+        user = User.objects.get(name=payload['name'])    
         data = json.loads(request.body.decode("utf-8"))
         a_name = data.get('alert_name')
         a_price = data.get('alert_price')
@@ -20,10 +97,11 @@ class Alert_Api(View):
         a_status = "created"
 
         alert_data = {
+            'user': user.name,
             'name': a_name,
             'crytoCurrency': a_crypto_currency,
             'price': a_price,
-            'status': a_status,
+            'status': a_status
         }
 
         alert_item = Alert.objects.create(**alert_data)
