@@ -24,6 +24,11 @@ from .models import User,Alert
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
 secretkey = 'SeCrEtKeY'
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -271,7 +276,7 @@ class Alert_Check(View):
         
         alerts = Alert.objects.all()
         alerts_count = len(alerts)
-
+        
         url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=USD&order=market_cap_desc&per_page=100&page=1&sparkline=false'
         r = requests.get(url)
         data = r.json()
@@ -279,11 +284,14 @@ class Alert_Check(View):
             for i in range(len(data)):
                 if alert.crytoCurrency == data[i]['name']:
                     if alert.price == data[i]['current_price']:
-                        alert.status = "triggered"
+                        print('triggered',alert.id)
+                        myalert = Alert.objects.get(id=alert.id)
+                        myalert.status = "triggered"
+                        myalert.save()
                         send_mail(
-                            'Alert from you Application',
-                            'The set amount price is reached, Kindly rush to sell/buy the stock faster... \n Thank you for using our Service',
-                            'alapativiswanath1@gmail.com',
+                            alert.name + ': Alert from you Crypto Stock: ' + alert.crytoCurrency,
+                            'The set amount price '+ str(alert.price) +' is reached for stock '+ alert.crytoCurrency +', Kindly rush to sell/buy the stock faster... \n Thank you for using our Service',
+                            env('HOST_EMAIL'),
                             [User.objects.get(name=alert.user).email],
                             fail_silently=False,
                         )
