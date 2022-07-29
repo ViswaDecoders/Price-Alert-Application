@@ -2,6 +2,12 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.core.cache import cache
+from django.conf import settings 
+
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
@@ -145,8 +151,15 @@ class Alert_Api(View):
         except:
             return JsonResponse({"message": f"Invalid Token",}, status=401)
         
-        alerts = Alert.objects.all()
+            
         alerts_count = Alert.objects.count()
+        if len(cache.get("data"))==alerts_count:
+            print("data from cache")
+            alerts = cache.get("data")
+        else:
+            alerts = Alert.objects.all()
+            cache.set("data",alerts)
+            print("data from db")            
 
         alerts_data = []
         for alert in alerts:
