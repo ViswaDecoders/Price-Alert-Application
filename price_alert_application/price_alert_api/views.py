@@ -16,10 +16,12 @@ class AlertAdd(View):
         data = json.loads(request.body.decode("utf-8"))
         a_name = data.get('alert_name')
         a_price = data.get('alert_price')
+        a_crypto_currency = data.get('alert_crypto_currency')
         a_status = "created"
 
         alert_data = {
             'name': a_name,
+            'crytoCurrency': a_crypto_currency,
             'price': a_price,
             'status': a_status,
         }
