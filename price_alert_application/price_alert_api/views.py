@@ -22,6 +22,7 @@ class User_Create(View):
     def post(self, request):
         data = json.loads(request.body.decode("utf-8"))
         u_name = data.get('user_name')
+        u_email = data.get('user_email')
         
         if len(User.objects.filter(name=u_name)) == 1:
             data = {
@@ -31,6 +32,7 @@ class User_Create(View):
         else:
             user_data = {
                 'name': u_name,
+                'email': u_email
             }
             user = User.objects.create(**user_data)
 
@@ -55,8 +57,9 @@ class User_Login(APIView):
         
         payload = {
             'name': u_name,
+            'email': user.email,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            'iat': datetime.datetime.utcnow(),
+            'iat': datetime.datetime.utcnow()
         }
 
         token = jwt.encode(payload, secretkey, algorithm='HS256')

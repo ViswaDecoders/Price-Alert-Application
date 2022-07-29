@@ -9,4 +9,5 @@ class Alert(models.Model):
 
 class User(models.Model):
     name = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
     authCode = models.TextField()
