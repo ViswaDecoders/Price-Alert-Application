@@ -34,23 +34,34 @@ class Alert_Api(View):
         return JsonResponse(data, status=201)
 
     def get(self, request):
-        items = Alert.objects.all()
-        items_count = Alert.objects.count()
+        alerts = Alert.objects.all()
+        alerts_count = Alert.objects.count()
 
-        items_data = []
-        for item in items:
-            items_data.append({
-                'alert_name': item.name,
-                'alert_crypto_currency': item.crytoCurrency,
-                'alert_price': item.price,
-                'alert_status': item.status,
+        alerts_data = []
+        for alert in alerts:
+            alerts_data.append({
+                'alert_id': alert.id,
+                'alert_name': alert.name,
+                'alert_crypto_currency': alert.crytoCurrency,
+                'alert_price': alert.price,
+                'alert_status': alert.status,
             })
 
         data = {
-            'count': items_count,
-            'items': items_data,
+            'count': alerts_count,
+            'items': alerts_data,
         }
 
         return JsonResponse(data, status=200)
+    
+    def patch(self, request, item_id):
+        alert = Alert.objects.get(id=item_id)
+        alert.status = "deleted"
+        alert.save()
 
+        data = {
+            'message': f'Item {item_id} has been deleted'
+        }
+
+        return JsonResponse(data)
 
