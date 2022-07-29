@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
+from django.core.mail import send_mail
+
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.core.cache import cache
 from django.conf import settings 
@@ -15,6 +17,7 @@ from rest_framework.exceptions import AuthenticationFailed
 import json
 import jwt
 import datetime
+import requests
 
 from .models import User,Alert
 
@@ -241,6 +244,63 @@ class Alert_status(View):
             })
 
         data = {
+            'count': alerts_count,
+            'items': alerts_data,
+        }
+
+        return JsonResponse(data, status=200)
+    
+class Alert_Check(View):
+    def get(self, request):
+        ctoken = request.COOKIES.get('authtoken')
+        try:
+            htoken = request.headers['Authorization'].split()[1]
+        except:
+            htoken=None
+
+        if not ctoken and not htoken:
+            return JsonResponse({"message": f"Token Missing",}, status=401)
+        
+        token=ctoken if ctoken else htoken
+        try:
+            payload = jwt.decode(token, secretkey, algorithms='HS256')
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=300)
+        except:
+            return JsonResponse({"message": f"Invalid Token",}, status=401)
+        
+        alerts = Alert.objects.all()
+        alerts_count = len(alerts)
+
+        url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=USD&order=market_cap_desc&per_page=100&page=1&sparkline=false'
+        r = requests.get(url)
+        data = r.json()
+        for alert in alerts:
+            for i in range(len(data)):
+                if alert.crytoCurrency == data[i]['name']:
+                    if alert.price == data[i]['current_price']:
+                        alert.status = "triggered"
+                        send_mail(
+                            'Alert from you Application',
+                            'The set amount price is reached, Kindly rush to sell/buy the stock faster... \n Thank you for using our Service',
+                            'alapativiswanath1@gmail.com',
+                            [User.objects.get(name=alert.user).email],
+                            fail_silently=False,
+                        )
+        
+        alerts_data = []
+        for alert in alerts:
+            alerts_data.append({
+                'alert_id': alert.id,
+                'alert_user': alert.user,
+                'alert_name': alert.name,
+                'alert_crypto_currency': alert.crytoCurrency,
+                'alert_price': alert.price,
+                'alert_status': alert.status,
+            })
+
+        data = {
+            'check': 'Succesful',
             'count': alerts_count,
             'items': alerts_data,
         }

@@ -5,7 +5,7 @@ from price_alert_api.models import Alert, User
 class AlertSerializer(serializers.ModelSerializer):
    class Meta:
        model = Alert
-       fields = ('name', 'price', 'status')
+       fields = ('user', 'name', 'crytoCurrency', 'price', 'status')
 
 
 class UserSerializer(serializers.ModelSerializer):
