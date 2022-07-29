@@ -86,16 +86,19 @@ class User_Logout(APIView):
 class Alert_Api(View):
     def post(self, request):
         ctoken = request.COOKIES.get('authtoken')
-        htoken = request.headers['Authorization'].split()[1]
+        try:
+            htoken = request.headers['Authorization'].split()[1]
+        except:
+            htoken=None
 
         if not ctoken and not htoken:
             return JsonResponse({"message": f"Token Missing",}, status=401)
         
-        token=ctoken=htoken
+        token=ctoken if ctoken else htoken
         try:
             payload = jwt.decode(token, secretkey, algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=401)
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=300)
         except:
             return JsonResponse({"message": f"Invalid Token",}, status=401)
         
@@ -123,16 +126,19 @@ class Alert_Api(View):
 
     def get(self, request):
         ctoken = request.COOKIES.get('authtoken')
-        htoken = request.headers['Authorization'].split()[1]
+        try:
+            htoken = request.headers['Authorization'].split()[1]
+        except:
+            htoken=None
 
         if not ctoken and not htoken:
             return JsonResponse({"message": f"Token Missing",}, status=401)
         
-        token=ctoken=htoken
+        token=ctoken if ctoken else htoken
         try:
             payload = jwt.decode(token, secretkey, algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=401)
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=300)
         except:
             return JsonResponse({"message": f"Invalid Token",}, status=401)
         
@@ -159,16 +165,19 @@ class Alert_Api(View):
     
     def patch(self, request, item_id):
         ctoken = request.COOKIES.get('authtoken')
-        htoken = request.headers['Authorization'].split()[1]
+        try:
+            htoken = request.headers['Authorization'].split()[1]
+        except:
+            htoken=None
 
         if not ctoken and not htoken:
             return JsonResponse({"message": f"Token Missing",}, status=401)
         
-        token=ctoken=htoken
+        token=ctoken if ctoken else htoken
         try:
             payload = jwt.decode(token, secretkey, algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=401)
+            return JsonResponse({"message": f"Token Expired, Kindly Relogin",}, status=300)
         except:
             return JsonResponse({"message": f"Invalid Token",}, status=401)
         
